@@ -28,7 +28,7 @@ resource "kubernetes_service_account_v1" "irsa" {
     }
   }
 
-  automount_service_account_token = false
+  automount_service_account_token = true
 }
 
 resource "kubernetes_secret_v1" "irsa" {
