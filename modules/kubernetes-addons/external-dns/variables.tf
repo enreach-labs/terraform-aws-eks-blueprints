@@ -32,6 +32,12 @@ variable "route53_zone_arns" {
   default     = []
 }
 
+variable "aws_provider" {
+  description = "Determines if the add-on should use aws/route53 as provider"
+  type        = bool
+  default     = true
+}
+
 variable "addon_context" {
   description = "Input configuration for the addon"
   type = object({
