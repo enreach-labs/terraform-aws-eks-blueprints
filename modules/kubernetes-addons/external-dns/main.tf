@@ -23,13 +23,13 @@ module "helm_addon" {
       repository  = "https://charts.bitnami.com/bitnami"
       version     = "6.11.2"
       namespace   = local.name
-      values = try(var.aws_provider,[
+      values = var.aws_provider ? [
         <<-EOT
           provider: aws
           aws:
             region: ${var.addon_context.aws_region_name}
         EOT
-      ],[])
+      ] : []
     },
     var.helm_config
   )
@@ -53,7 +53,7 @@ module "helm_addon" {
     kubernetes_namespace              = try(var.helm_config.namespace, local.name)
     create_kubernetes_service_account = true
     kubernetes_service_account        = local.service_account
-    irsa_iam_policies                 = try(var.aws_provider, concat([aws_iam_policy.external_dns.arn], var.irsa_policies), [])
+    irsa_iam_policies                 = var.aws_provider ? concat([aws_iam_policy.external_dns[0].arn], var.irsa_policies) : []
   }
 
   addon_context     = var.addon_context
@@ -70,7 +70,7 @@ resource "aws_iam_policy" "external_dns" {
   description = "External DNS IAM policy."
   name        = "${var.addon_context.eks_cluster_id}-${local.name}-irsa"
   path        = var.addon_context.irsa_iam_role_path
-  policy      = data.aws_iam_policy_document.external_dns_iam_policy_document.json
+  policy      = data.aws_iam_policy_document.external_dns_iam_policy_document[0].json
   tags        = var.addon_context.tags
 }
 
@@ -88,7 +88,7 @@ data "aws_iam_policy_document" "external_dns_iam_policy_document" {
   statement {
     effect = "Allow"
     resources = distinct(concat(
-      [data.aws_route53_zone.selected.arn],
+      [data.aws_route53_zone.selected[0].arn],
       var.route53_zone_arns
     ))
     actions = ["route53:ChangeResourceRecordSets"]
